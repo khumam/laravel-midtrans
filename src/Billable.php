@@ -8,7 +8,21 @@ use Khumam\Midtrans\Models\Transaction;
 
 trait Billable
 {
-    public function midtransTransactions()
+    public function subscribed()
+    {
+        return $this->subscription() !== null;
+    }
+
+    public function subscription()
+    {
+        return $this->transactions()
+            ->where('type', 'subscription')
+            ->whereIn('status', ['capture', 'settlement'])
+            ->whereDate('ends_at', '>=', now())
+            ->first();
+    }
+
+    public function transactions()
     {
         return $this->morphMany(Transaction::class, 'billable');
     }
@@ -17,8 +31,8 @@ trait Billable
     {
         $orderId = Str::uuid()->toString();
 
-        $this->midtransTransactions()->where('status', 'pending')->update(['status' => 'cancelled']);
-        $transaction = $this->midtransTransactions()->create([
+        $this->transactions()->where('status', 'pending')->update(['status' => 'cancelled']);
+        $transaction = $this->transactions()->create([
             'order_id' => $orderId,
             'gross_amount' => $grossAmount,
             'status' => 'pending',
@@ -36,8 +50,8 @@ trait Billable
     {
         $orderId = Str::uuid()->toString();
 
-        $this->midtransTransactions()->where('status', 'pending')->update(['status' => 'cancelled']);
-        $transaction = $this->midtransTransactions()->create([
+        $this->transactions()->where('status', 'pending')->update(['status' => 'cancelled']);
+        $transaction = $this->transactions()->create([
             'order_id' => $orderId,
             'gross_amount' => $grossAmount,
             'status' => 'pending',

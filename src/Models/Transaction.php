@@ -52,4 +52,9 @@ class Transaction extends Model
     {
         return in_array($this->status, ['refund', 'partial_refund']);
     }
+    
+    public function onGracePeriod(int $gracePeriodInDays): bool
+    {
+        return $this->ends_at < now()->subDays($gracePeriodInDays);
+    }
 }
