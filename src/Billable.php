@@ -17,7 +17,7 @@ trait Billable
     {
         return $this->transactions()
             ->where('type', 'subscription')
-            ->whereIn('status', ['capture', 'settlement'])
+            ->whereIn('status', ['capture', 'settlement', 'cancel-subscription'])
             ->whereDate('ends_at', '>=', now())
             ->first();
     }

@@ -57,4 +57,9 @@ class Transaction extends Model
     {
         return $this->ends_at < now()->subDays($gracePeriodInDays);
     }
+    
+    public function cancel(): void
+    {
+        $this->update(['status' => 'cancel-subscription']);
+    }
 }
