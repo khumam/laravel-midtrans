@@ -4,6 +4,7 @@ namespace Khumam\Midtrans;
 
 use Illuminate\Support\Str;
 use Khumam\Midtrans\Enums\MidtransPeriod;
+use Khumam\Midtrans\Models\Customer;
 use Khumam\Midtrans\Models\Transaction;
 
 trait Billable
@@ -25,6 +26,11 @@ trait Billable
     public function transactions()
     {
         return $this->morphMany(Transaction::class, 'billable');
+    }
+
+    public function midtransCustomer()
+    {
+        return $this->morphOne(Customer::class, 'billable');
     }
 
     public function checkout(float $grossAmount, array $options = []): Checkout

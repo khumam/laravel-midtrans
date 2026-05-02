@@ -133,10 +133,12 @@ All methods below are chainable on the `Checkout` object returned by `checkout()
 ### Transaction Details
 
 ```php
-->withItemDetail([                      // Item details
+->withItemDetail([
     ['id' => 'item1', 'price' => 50000, 'quantity' => 1, 'name' => 'Product A'],
     ['id' => 'item2', 'price' => 25000, 'quantity' => 2, 'name' => 'Product B'],
 ])
+// Available fields per item:
+// id, price, quantity, name, brand, category, merchant_name, tenor, code_plan, mid, url
 ->withCustomerDetail([                  // Override customer details
     'first_name' => 'John',
     'last_name' => 'Doe',
@@ -229,6 +231,81 @@ $transaction->onGracePeriod(3);  // true if ends_at passed < 3 days ago
 $transaction->billable;          // The User model (morph relationship)
 $transaction->responses;         // All webhook responses (HasMany)
 $transaction->latestResponse;    // Latest webhook response (HasOne)
+$transaction->items;             // Transaction items (HasMany TransactionItem)
+```
+
+### Transaction Items
+
+When you use `withItemDetail()`, item details are persisted to the `midtrans_transaction_items` table on checkout. Items are linked to the transaction via `order_id` and cascade deleted with the parent transaction.
+
+```php
+use Khumam\Midtrans\Models\TransactionItem;
+
+// Access items from transaction
+$transaction->items;                    // Collection of TransactionItem
+$transaction->items->first()->name;     // 'Product A'
+$transaction->items->first()->price;    // 50000
+
+// Query items directly
+$item = TransactionItem::find(1);
+$item->transaction;                     // BelongsTo Transaction
+```
+
+Item detail fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Item identifier |
+| `price` | integer | Item price |
+| `quantity` | integer | Quantity |
+| `name` | string | Item name |
+| `brand` | string | Brand name |
+| `category` | string | Item category |
+| `merchant_name` | string | Merchant name |
+| `tenor` | integer | Installment tenor |
+| `code_plan` | string | Installment code plan |
+| `mid` | string | Merchant ID |
+| `url` | string | Item URL |
+
+> **Note:** Must be an indexed array of items (`[[...], [...]]`), not a single associative array.
+
+## Testing
+
+```bash
+composer test
+```
+
+Or directly:
+
+```bash
+vendor/bin/phpunit
+```
+
+### Writing Tests
+
+This package uses [Orchestra Testbench](https://packages.tools/testbench.html) for Laravel package testing. Extend the base `TestCase`:
+
+```php
+namespace Khumam\Midtrans\Tests\Feature;
+
+use Khumam\Midtrans\Tests\TestCase;
+
+class MyTest extends TestCase
+{
+    // database migrations run automatically
+    // config: midtrans.server_key and midtrans.is_sandbox are pre-set
+}
+```
+
+### Test Structure
+
+```
+tests/
+├── TestCase.php              # Base test (Orchestra Testbench)
+├── Unit/
+│   └── ItemDetailObjectTest  # 18 tests — validation, types, edge cases
+└── Feature/
+    └── TransactionItemTest   # 8 tests — relations, DB, cascade delete
 ```
 
 ## License

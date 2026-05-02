@@ -12,13 +12,31 @@ trait ItemDetailObject
         
         $this->payload['item_details'] = $itemDetails;
 
+        $this->transaction->items()->delete();
+
+        foreach ($itemDetails as $item) {
+            $this->transaction->items()->create([
+                'item_id' => $item['id'] ?? null,
+                'price' => $item['price'] ?? null,
+                'quantity' => $item['quantity'] ?? null,
+                'name' => $item['name'] ?? null,
+                'brand' => $item['brand'] ?? null,
+                'category' => $item['category'] ?? null,
+                'merchant_name' => $item['merchant_name'] ?? null,
+                'tenor' => $item['tenor'] ?? null,
+                'code_plan' => $item['code_plan'] ?? null,
+                'mid' => $item['mid'] ?? null,
+                'url' => $item['url'] ?? null,
+            ]);
+        }
+
         return $this;
     }
     
     protected function validateItemDetail(array $itemDetails): array
     {
         $rules = [
-            "*.id" => "nullable|string",
+            "*.id" => "nullable",
             "*.price" => "nullable|integer",
             "*.quantity" => "nullable|integer",
             "*.name" => "nullable|string",

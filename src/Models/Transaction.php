@@ -5,6 +5,7 @@ namespace Khumam\Midtrans\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Khumam\Midtrans\Models\TransactionItem;
 use Khumam\Midtrans\Models\TransactionResponse;
 
 class Transaction extends Model
@@ -26,6 +27,11 @@ class Transaction extends Model
     public function responses(): HasMany
     {
         return $this->hasMany(TransactionResponse::class, 'order_id', 'order_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(TransactionItem::class, 'order_id', 'order_id');
     }
 
     public function latestResponse()

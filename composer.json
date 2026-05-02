@@ -4,6 +4,10 @@
     "keywords": ["laravel", "midtrans", "payment", "gateway"],
     "type": "library",
     "license": "MIT",
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
     "require": {
         "php": "^8.2",
         "illuminate/contracts": "^11.0|^12.0|^13.0",
@@ -17,6 +21,14 @@
         "psr-4": {
             "Khumam\\Midtrans\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Khumam\\Midtrans\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     },
     "extra": {
         "laravel": {
