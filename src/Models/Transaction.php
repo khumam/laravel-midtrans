@@ -16,6 +16,8 @@ class Transaction extends Model
 
     protected $casts = [
         'gross_amount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'tax_percentage' => 'decimal:2',
         'ends_at' => 'datetime',
     ];
 

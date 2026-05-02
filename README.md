@@ -137,8 +137,6 @@ All methods below are chainable on the `Checkout` object returned by `checkout()
     ['id' => 'item1', 'price' => 50000, 'quantity' => 1, 'name' => 'Product A'],
     ['id' => 'item2', 'price' => 25000, 'quantity' => 2, 'name' => 'Product B'],
 ])
-// Available fields per item:
-// id, price, quantity, name, brand, category, merchant_name, tenor, code_plan, mid, url
 ->withCustomerDetail([                  // Override customer details
     'first_name' => 'John',
     'last_name' => 'Doe',
@@ -177,10 +175,32 @@ $user->checkout(50000, [
 ])
 ```
 
+### Tax
+
+```php
+->withTax(5000)                         // Fixed tax: adds 5000 to gross_amount
+->withTaxPercentage(11)                 // Percentage tax: 11% of gross_amount
+```
+
+- `withTax(float $taxPrice)` — adds fixed tax amount to `gross_amount`, stores `tax_amount`, adds a "Tax" item detail
+- `withTaxPercentage(float $percent)` — calculates `gross_amount * percent / 100`, adds to `gross_amount`, stores `tax_amount` and `tax_percentage`, adds a "Tax" item detail
+
 ### Finalize
 
 ```php
 ->redirectTo('route.name')              // Redirects user to Midtrans Snap payment page
+->getRedirectUrl()                      // Returns the Snap redirect URL as string (no redirect)
+```
+
+Use `getRedirectUrl()` when you need the URL without auto-redirecting (SPA, API responses, etc.):
+
+```php
+// Return URL as JSON for frontend
+$url = $user->checkout(50000)->getRedirectUrl();
+return response()->json(['payment_url' => $url]);
+
+// Or redirect manually
+return redirect($user->checkout(50000)->getRedirectUrl());
 ```
 
 ## Webhook
@@ -232,42 +252,38 @@ $transaction->billable;          // The User model (morph relationship)
 $transaction->responses;         // All webhook responses (HasMany)
 $transaction->latestResponse;    // Latest webhook response (HasOne)
 $transaction->items;             // Transaction items (HasMany TransactionItem)
+$transaction->tax_amount;        // Tax amount (decimal)
+$transaction->tax_percentage;    // Tax percentage (decimal)
 ```
 
 ### Transaction Items
 
-When you use `withItemDetail()`, item details are persisted to the `midtrans_transaction_items` table on checkout. Items are linked to the transaction via `order_id` and cascade deleted with the parent transaction.
+When you use `withItemDetail()`, items are persisted and linked to the transaction. Items cascade delete with the parent transaction.
 
 ```php
 use Khumam\Midtrans\Models\TransactionItem;
 
-// Access items from transaction
 $transaction->items;                    // Collection of TransactionItem
 $transaction->items->first()->name;     // 'Product A'
-$transaction->items->first()->price;    // 50000
 
-// Query items directly
 $item = TransactionItem::find(1);
 $item->transaction;                     // BelongsTo Transaction
 ```
 
-Item detail fields:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Item identifier |
-| `price` | integer | Item price |
-| `quantity` | integer | Quantity |
-| `name` | string | Item name |
-| `brand` | string | Brand name |
-| `category` | string | Item category |
-| `merchant_name` | string | Merchant name |
-| `tenor` | integer | Installment tenor |
-| `code_plan` | string | Installment code plan |
-| `mid` | string | Merchant ID |
-| `url` | string | Item URL |
-
 > **Note:** Must be an indexed array of items (`[[...], [...]]`), not a single associative array.
+
+### Customers
+
+Customer details are automatically upserted when `withCustomerDetail()` is called (happens by default on every checkout). One customer record per billable model — subsequent checkouts update the existing record.
+
+```php
+use Khumam\Midtrans\Models\Customer;
+
+$user->midtransCustomer;                // Customer model or null
+
+$customer = Customer::find(1);
+$customer->billable;                    // The User model (morph relationship)
+```
 
 ## Testing
 
@@ -301,11 +317,14 @@ class MyTest extends TestCase
 
 ```
 tests/
-├── TestCase.php              # Base test (Orchestra Testbench)
+├── TestCase.php                   # Base test (Orchestra Testbench)
 ├── Unit/
-│   └── ItemDetailObjectTest  # 18 tests — validation, types, edge cases
+│   ├── ItemDetailObjectTest       # Item detail validation, types, edge cases
+│   └── TaxObjectTest              # Tax calculations, fixed & percentage
 └── Feature/
-    └── TransactionItemTest   # 8 tests — relations, DB, cascade delete
+    ├── TransactionItemTest        # Item relations, DB, cascade delete
+    ├── CustomerTest               # Customer upsert, relations, billing/shipping
+    └── CheckoutRedirectTest       # getRedirectUrl, redirectTo, mocked API
 ```
 
 ## License

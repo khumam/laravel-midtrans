@@ -18,6 +18,7 @@ use Khumam\Midtrans\RequestObjects\QrisObject;
 use Khumam\Midtrans\RequestObjects\SellerDetailObject;
 use Khumam\Midtrans\RequestObjects\ShopeePayObject;
 use Khumam\Midtrans\RequestObjects\SubscriptionScheduleObject;
+use Khumam\Midtrans\RequestObjects\TaxObject;
 use Khumam\Midtrans\RequestObjects\TransactionDetailObject;
 use Khumam\Midtrans\RequestObjects\VaNumberObject;
 
@@ -25,7 +26,7 @@ class Checkout
 {
     use BankTransferObject, CreditCardObject, CustomerDetailObject, CustomExpiryObject, EChannelObject, GopayObject;
     use SellerDetailObject, ShopeePayObject, SubscriptionScheduleObject, TransactionDetailObject, VaNumberObject;
-    use ItemDetailObject, OverTheCounterObject, OvoObject, PaymentAmountObject, QrisObject;
+    use ItemDetailObject, OverTheCounterObject, OvoObject, PaymentAmountObject, QrisObject, TaxObject;
 
     protected Client $client;
     protected Transaction $transaction;
@@ -92,10 +93,19 @@ class Checkout
     {
         $this->redirectRoute = $route;
 
-        return $this->send();
+        $this->send();
+
+        return redirect($this->transaction->snap_redirect_url);
     }
 
-    protected function send(): mixed
+    public function getRedirectUrl(): string
+    {
+        $this->send();
+
+        return $this->transaction->snap_redirect_url;
+    }
+
+    protected function send(): void
     {
         $response = $this->client->post('/snap/v1/transactions', [
             'json' => $this->payload,
@@ -107,7 +117,5 @@ class Checkout
             'snap_token' => $data['token'],
             'snap_redirect_url' => $data['redirect_url'],
         ]);
-
-        return redirect($data['redirect_url']);
     }
 }
